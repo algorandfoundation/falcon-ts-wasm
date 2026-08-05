@@ -1,6 +1,6 @@
 {
-  "name": "falcon-1024",
-  "version": "0.2.0",
+  "name": "@algorand/falcon-wasm",
+  "version": "0.0.0",
   "type": "module",
   "main": "./index.cjs",
   "module": "./index.js",
