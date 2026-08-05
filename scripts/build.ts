@@ -1,5 +1,5 @@
 import { spawnSync } from "child_process";
-import { readFileSync, readdirSync, renameSync, writeFileSync } from "fs";
+import { readFileSync, readdirSync, renameSync, statSync, writeFileSync } from "fs";
 import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 
@@ -17,12 +17,24 @@ function run(cmd: string, args: string[]) {
   return result;
 }
 
+function isDirEmpty(path: string) {
+  try {
+    return readdirSync(path).length === 0;
+  } catch {
+    return true
+  }
+}
+
 const scriptDir = dirname(fileURLToPath(import.meta.url));
+const falconDir = resolve(scriptDir, "../falcon/")
+const emsdkDir = resolve(scriptDir, "../emsdk")
 
 const emsdkBin = resolve(scriptDir, "../emsdk/emsdk");
 const emsdkVersion = "5.0.7";
 
-run("git", ["submodule", "update", "--init", "--recursive"]);
+if (isDirEmpty(falconDir) || isDirEmpty(emsdkDir)) {
+  run("git", ["submodule", "update", "--init", "--recursive"]);
+}
 run(emsdkBin, ["install", emsdkVersion]);
 run(emsdkBin, ["activate", emsdkVersion]);
 
