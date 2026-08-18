@@ -1,5 +1,5 @@
 {
-  "name": "@algorand/falcon-wasm",
+  "name": "@algorandfoundation/falcon-wasm",
   "version": "0.0.0",
   "type": "module",
   "main": "./index.cjs",
