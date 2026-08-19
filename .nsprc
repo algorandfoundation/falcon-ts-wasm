@@ -1,0 +1,47 @@
+{
+  "GHSA-mh99-v99m-4gvg": {
+    "active": true,
+    "notes": "brace-expansion DoS. Bundled inside npm@11, pulled in by @semantic-release/npm. Dev-only (CI publish step), not reachable from published dist. No fix available: semantic-release and @semantic-release/npm are already at latest.",
+    "expiry": "2027-02-04"
+  },
+  "GHSA-rgw5-rvv9-x895": {
+    "active": true,
+    "notes": "brace-expansion DoS via unbounded intermediate arrays. Bundled inside npm@11 via @semantic-release/npm. Dev-only (CI publish step), not reachable from published dist. No fix available upstream.",
+    "expiry": "2027-02-04"
+  },
+  "GHSA-mwp4-54f8-5fhr": {
+    "active": true,
+    "notes": "ip-address SSRF via leading-zero octets. Bundled inside npm@11 via @semantic-release/npm. Dev-only (CI publish step); we never parse untrusted addresses. No fix available upstream.",
+    "expiry": "2027-02-04"
+  },
+  "GHSA-4xrf-jv44-h6hh": {
+    "active": true,
+    "notes": "ip-address CIDR suffix suppresses special-use classification. Bundled inside npm@11 via @semantic-release/npm. Dev-only (CI publish step); we never parse untrusted addresses. No fix available upstream.",
+    "expiry": "2027-02-04"
+  },
+  "GHSA-22jq-vg5j-6vgg": {
+    "active": true,
+    "notes": "ip-address misclassifies IPv4-mapped/NAT64 IPv6. Bundled inside npm@11 via @semantic-release/npm. Dev-only (CI publish step); we never parse untrusted addresses. No fix available upstream.",
+    "expiry": "2027-02-04"
+  },
+  "GHSA-r292-9mhp-454m": {
+    "active": true,
+    "notes": "node-tar stack-overflow DoS via crafted long-path tar. Bundled inside npm@11 via @semantic-release/npm. Dev-only (CI publish step); tarballs come from the npm registry, not untrusted input. No fix available upstream.",
+    "expiry": "2027-02-04"
+  },
+  "GHSA-8xcm-r25x-g524": {
+    "active": true,
+    "notes": "undici response desynchronization via retry interceptor. Bundled inside npm@11 via @semantic-release/npm. Dev-only (CI publish step). No fix available upstream.",
+    "expiry": "2027-02-04"
+  },
+  "GHSA-m8rv-5g2x-5cg5": {
+    "active": true,
+    "notes": "undici CRLF injection via blob-like body 'type'. Bundled inside npm@11 via @semantic-release/npm. Dev-only (CI publish step). No fix available upstream.",
+    "expiry": "2027-02-04"
+  },
+  "GHSA-v3r7-h72x-cjcm": {
+    "active": true,
+    "notes": "undici cookie attribute injection. Bundled inside npm@11 via @semantic-release/npm. Dev-only (CI publish step). No fix available upstream.",
+    "expiry": "2027-02-04"
+  }
+}

@@ -1,0 +1,81 @@
+name: Publish
+
+on:
+  push:
+    branches:
+      - main
+      - release
+  workflow_dispatch:
+
+concurrency: release
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: algorandfoundation/algokit-shared-config/.github/workflows/node-ci.yml@main
+    with:
+      run-commit-lint: false
+      run-build: true
+      audit-script: npm run audit
+      test-script: npm run test -- --silent
+      install-algokit: false
+      polytest: false
+
+  build:
+    name: Build
+    needs:
+      - ci
+    uses: algorandfoundation/algokit-shared-config/.github/workflows/node-build-zip.yml@main
+    with:
+      build-path: dist
+      artifact-name: package
+
+  release:
+    name: Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - name: Generate bot token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
+        id: app_token
+        with:
+          app-id: ${{ secrets.BOT_ID }}
+          private-key: ${{ secrets.BOT_SK }}
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app_token.outputs.token }}
+
+      - name: Set Git user as GitHub actions
+        run: git config --global user.email "179917785+engineering-ci[bot]@users.noreply.github.com" && git config --global user.name "engineering-ci[bot]"
+
+      - name: Use Node.js 24.x
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24.x
+
+      - name: Download built package
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: package
+          path: artifacts
+
+      - name: Unzip package
+        shell: bash
+        run: |
+          mkdir -p dist
+          unzip -q "artifacts/package.zip" -d dist
+
+      - name: Install dependencies to get semantic release components and plugins
+        run: npm ci --ignore-scripts
+
+      - name: 'Semantic release'
+        run: npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ steps.app_token.outputs.token }}

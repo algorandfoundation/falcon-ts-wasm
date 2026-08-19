@@ -1,0 +1,98 @@
+{
+  "name": "@algorandfoundation/falcon-wasm",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./index.cjs",
+  "module": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./index.d.ts",
+        "default": "./index.js"
+      },
+      "require": {
+        "types": "./index.d.cts",
+        "default": "./index.cjs"
+      },
+      "default": "./index.js"
+    }
+  },
+  "files": [
+    "**/*"
+  ],
+  "scripts": {
+    "build": "npm exec tsx scripts/build.ts && esbuild src/index.ts --bundle --outfile=dist/index.js --target=es2022 --format=esm && esbuild src/index.cjs.ts --bundle --outfile=dist/index.cjs --target=es2022 --format=cjs --platform=node --define:import.meta.url=__filename && tsc -p tsconfig.build.json && node -e \"require('fs').copyFileSync('dist/index.d.ts','dist/index.d.cts')\" && tsx scripts/copy-package-json.ts",
+    "test": "vitest run --exclude '**/browser_tests/**' tests",
+    "test:esm": "node --test dist_tests/esm.mjs",
+    "test:cjs": "node --test dist_tests/cjs.cjs",
+    "test:dist": "npm run build && npm run test:esm && npm run test:cjs",
+    "test:browser": "npm run build && npm exec playwright test",
+    "prepublishOnly": "npm run build",
+    "audit": "better-npm-audit audit"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^25.8.0",
+    "better-npm-audit": "^3.11.0",
+    "conventional-changelog-conventionalcommits": "^10.2.1",
+    "esbuild": "^0.25.0",
+    "playwright": "^1.60.0",
+    "semantic-release": "^25.0.8",
+    "serve": "^14.2.6",
+    "tsx": "^4.22.0",
+    "typescript": "^5",
+    "vitest": "^4.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/joe-p/falcon-1024-ts.git"
+  },
+  "homepage": "https://github.com/joe-p/falcon-1024-ts#readme",
+  "bugs": {
+    "url": "https://github.com/joe-p/falcon-1024-ts/issues"
+  },
+  "release": {
+    "branches": [
+      {
+        "name": "main",
+        "prerelease": "beta"
+      },
+      {
+        "name": "release"
+      }
+    ],
+    "plugins": [
+      [
+        "@semantic-release/commit-analyzer",
+        {
+          "preset": "conventionalcommits",
+          "releaseRules": [
+            {
+              "type": "build",
+              "release": "patch"
+            },
+            {
+              "type": "chore",
+              "release": "patch"
+            },
+            {
+              "type": "refactor",
+              "release": "patch"
+            }
+          ]
+        }
+      ],
+      [
+        "@semantic-release/npm",
+        {
+          "pkgRoot": "dist"
+        }
+      ],
+      "@semantic-release/github"
+    ]
+  }
+}

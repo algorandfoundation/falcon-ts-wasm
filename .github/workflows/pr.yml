@@ -1,0 +1,20 @@
+name: Pull Request
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    uses: algorandfoundation/algokit-shared-config/.github/workflows/node-ci.yml@main
+    with:
+      run-commit-lint: false
+      run-build: true
+      audit-script: npm run audit
+      test-script: npm run test -- --silent
+      install-algokit: false
+      polytest: false
+
