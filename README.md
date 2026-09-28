@@ -1,4 +1,4 @@
-# falcon-1024-ts
+# @algorandfoundation/falcon-wasm
 
 TypeScript/WebAssembly bindings for deterministic [Falcon-1024](https://falcon-sign.info/) post-quantum signatures, backed by the [C implementation](https://github.com/algorand/falcon) of Falcon-1024 by [David Lazar](https://scholar.google.com/citations?user=Niwk8-QAAAAJ&hl=en) and [Chris Peikert](https://scholar.google.com/citations?user=PiZymREAAAAJ&hl=en). This is the same implementation used by the [go-algorand](https://github.com/algorand/go-algorand) Algorand client.
 
@@ -6,13 +6,13 @@ TypeScript/WebAssembly bindings for deterministic [Falcon-1024](https://falcon-s
 
 ```bash
 # npm
-npm install falcon-1024
+npm install @algorandfoundation/falcon-wasm
 
 # pnpm
-pnpm add falcon-1024
+pnpm add @algorandfoundation/falcon-wasm
 
 # Bun
-bun add falcon-1024
+bun add @algorandfoundation/falcon-wasm
 ```
 
 The package ships precompiled WebAssembly **embedded directly in the JavaScript** (there is no separate `.wasm` file to serve), with both ES module and CommonJS builds. It works out of the box in modern browsers, Node.js (ESM **and** CommonJS), Bun, and bundlers — no `fetch` shim or asset wiring required.
@@ -20,7 +20,7 @@ The package ships precompiled WebAssembly **embedded directly in the JavaScript*
 ## Quick Start
 
 ```ts
-import { falcon1024 } from "falcon-1024";
+import { falcon1024 } from "@algorandfoundation/falcon-wasm";
 
 const encoder = new TextEncoder();
 const message = encoder.encode("hello, post-quantum world");
@@ -39,7 +39,7 @@ console.log("Signature valid?", isValid); // true
 The same API is available via CommonJS `require`:
 
 ```js
-const { falcon1024 } = require("falcon-1024");
+const { falcon1024 } = require("@algorandfoundation/falcon-wasm");
 ```
 
 ### Deterministic key generation from a seed
@@ -47,7 +47,7 @@ const { falcon1024 } = require("falcon-1024");
 If you pass a seed, key generation is deterministic:
 
 ```ts
-import { falcon1024 } from "falcon-1024";
+import { falcon1024 } from "@algorandfoundation/falcon-wasm";
 
 const seed = crypto.getRandomValues(new Uint8Array(48));
 const { publicKey, privateKey } = falcon1024.generateKey(seed);
@@ -71,8 +71,8 @@ import {
   KeygenError,
   SigningError,
   VerificationError,
-} from "falcon-1024";
-import type { FalconApi } from "falcon-1024";
+} from "@algorandfoundation/falcon-wasm";
+import type { FalconApi } from "@algorandfoundation/falcon-wasm";
 ```
 
 ### `falcon1024`
@@ -117,8 +117,8 @@ All error classes extend `Error` and wrap underlying Falcon error codes:
 
 ## Environment & Requirements
 
-- Dual ESM + CommonJS package. Both `import { generateKey } from "falcon-1024"`
-  and `const { generateKey } = require("falcon-1024")` work with no extra setup.
+- Dual ESM + CommonJS package. Both `import { falcon1024 } from "@algorandfoundation/falcon-wasm"`
+  and `const { falcon1024 } = require("@algorandfoundation/falcon-wasm")` work with no extra setup.
 - The WebAssembly is embedded in the JavaScript, so there is no `.wasm` file to
   copy or serve — bundlers and runtimes load it with no asset wiring or `fetch`
   shim.
