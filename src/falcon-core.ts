@@ -39,7 +39,20 @@ export const FALCON_DET1024_PRIVKEY_SIZE =
 export const FALCON_DET1024_SIG_COMPRESSED_MAXSIZE =
   falconSigCompressedMaxSize(FALCON_DET1024_LOGN) - 40 + 1;
 
+/** Maximum size of a randomized (salted) compressed Falcon-1024 signature. */
+export const FALCON1024_SIG_COMPRESSED_MAXSIZE =
+  falconSigCompressedMaxSize(FALCON_DET1024_LOGN);
+
+/** Header byte of a deterministic compressed Falcon-1024 signature. */
+export const FALCON_DET1024_SIG_COMPRESSED_HEADER = 0x3a | 0x80;
+/** Header byte of a randomized (salted) compressed Falcon-1024 signature. */
+export const FALCON1024_SIG_COMPRESSED_HEADER = 0x3a;
+
 const SHAKE256_CONTEXT_SIZE = 26 * 8;
+const FALCON_SIG_COMPRESSED = 1;
+const FALCON_ERR_FORMAT = -3;
+const FALCON_TMPSIZE_SIGNDYN = (78 << FALCON_DET1024_LOGN) + 7;
+const FALCON_TMPSIZE_VERIFY = (8 << FALCON_DET1024_LOGN) + 1;
 
 class FalconError extends Error {
   constructor(context: number | string) {
@@ -92,7 +105,11 @@ export interface FalconApi {
     publicKey: Uint8Array;
     privateKey: Uint8Array;
   };
-  signCompressed(privateKey: Uint8Array, message: Uint8Array): Uint8Array;
+  signCompressed(
+    privateKey: Uint8Array,
+    message: Uint8Array,
+    randomized?: boolean,
+  ): Uint8Array;
   verifyCompressed(
     publicKey: Uint8Array,
     signature: Uint8Array,
@@ -238,11 +255,19 @@ export function makeApi(module: FalconModule): FalconApi {
    * Signs a message with the given private key using compressed format.
    * @param privateKey - The private key (FALCON_DET1024_PRIVKEY_SIZE bytes).
    * @param message - The message to sign.
+   * @param randomized - If true, uses randomized (salted) Falcon with a fresh
+   * random 40-byte nonce, so signing the same message twice yields different
+   * signatures. Defaults to false (deterministic). Note that the Algorand AVM
+   * `falcon_verify` opcode only accepts deterministic signatures.
+   * Experimental: randomized mode implements the NIST Round 3 Falcon
+   * submission, not FN-DSA (FIPS 206). Its output is expected to change once
+   * FIPS 206 is final.
    * @returns The compressed signature as a Uint8Array.
    */
   function signCompressed(
     privateKey: Uint8Array,
     message: Uint8Array,
+    randomized: boolean = false,
   ): Uint8Array {
     if (privateKey.length !== FALCON_DET1024_PRIVKEY_SIZE) {
       throw new SigningError(
@@ -250,6 +275,15 @@ export function makeApi(module: FalconModule): FalconApi {
       );
     }
 
+    return randomized
+      ? signCompressedRandomized(privateKey, message)
+      : signCompressedDeterministic(privateKey, message);
+  }
+
+  function signCompressedDeterministic(
+    privateKey: Uint8Array,
+    message: Uint8Array,
+  ): Uint8Array {
     const msgLen = message.length;
 
     const sigPtr = WasmPtr.u8("sig", FALCON_DET1024_SIG_COMPRESSED_MAXSIZE);
@@ -285,7 +319,9 @@ export function makeApi(module: FalconModule): FalconApi {
   }
 
   /**
-   * Verifies a compressed signature against a message and public key.
+   * Verifies a compressed signature against a message and public key. Both
+   * deterministic and randomized (salted) signatures are accepted; the mode is
+   * selected from the header byte and any other header is rejected.
    * @param publicKey - The public key (FALCON_DET1024_PUBKEY_SIZE bytes).
    * @param signature - The compressed signature.
    * @param message - The original message.
@@ -307,12 +343,35 @@ export function makeApi(module: FalconModule): FalconApi {
       throw new VerificationError("Empty signature");
     }
 
-    if (signature.length > FALCON_DET1024_SIG_COMPRESSED_MAXSIZE) {
+    let maxSize: number;
+    let verifyFn: typeof verifyCompressedDeterministic;
+    switch (signature[0]) {
+      case FALCON_DET1024_SIG_COMPRESSED_HEADER:
+        maxSize = FALCON_DET1024_SIG_COMPRESSED_MAXSIZE;
+        verifyFn = verifyCompressedDeterministic;
+        break;
+      case FALCON1024_SIG_COMPRESSED_HEADER:
+        maxSize = FALCON1024_SIG_COMPRESSED_MAXSIZE;
+        verifyFn = verifyCompressedRandomized;
+        break;
+      default:
+        throw new VerificationError(FALCON_ERR_FORMAT);
+    }
+
+    if (signature.length > maxSize) {
       throw new VerificationError(
-        `Invalid signature length: ${signature.length}. Maximum is ${FALCON_DET1024_SIG_COMPRESSED_MAXSIZE}.`,
+        `Invalid signature length: ${signature.length}. Maximum is ${maxSize}.`,
       );
     }
 
+    return verifyFn(publicKey, signature, message);
+  }
+
+  function verifyCompressedDeterministic(
+    publicKey: Uint8Array,
+    signature: Uint8Array,
+    message: Uint8Array,
+  ): boolean {
     const msgLen = message.length;
 
     const sigPtr = WasmPtr.u8("sig", signature.length);
@@ -335,6 +394,114 @@ export function makeApi(module: FalconModule): FalconApi {
         publicKeyPtr.address,
         msgPtr.address,
         msgLen,
+      );
+
+      if (result !== 0) {
+        throw new VerificationError(result);
+      }
+
+      return true;
+    });
+  }
+
+  function signCompressedRandomized(
+    privateKey: Uint8Array,
+    message: Uint8Array,
+  ): Uint8Array {
+    const seed = new Uint8Array(48);
+    crypto.getRandomValues(seed);
+    const seedLen = seed.length;
+    const msgLen = message.length;
+
+    const rngPtr = WasmPtr.u8("rng", SHAKE256_CONTEXT_SIZE);
+    const seedPtr = WasmPtr.u8("seed", seedLen);
+    const sigPtr = WasmPtr.u8("sig", FALCON1024_SIG_COMPRESSED_MAXSIZE);
+    const sigLenPtr = WasmPtr.u32("sigLen", 4); // size_t pointer
+    const privateKeyPtr = WasmPtr.u8("privateKey", FALCON_DET1024_PRIVKEY_SIZE);
+    const msgPtr = WasmPtr.u8("msg", msgLen);
+    const tmpPtr = WasmPtr.u8("tmp", FALCON_TMPSIZE_SIGNDYN);
+
+    const allocations = [
+      rngPtr,
+      seedPtr,
+      sigPtr,
+      sigLenPtr,
+      privateKeyPtr,
+      msgPtr,
+      tmpPtr,
+    ];
+
+    return withWasmAllocations(allocations, () => {
+      seedPtr.write(seed);
+      module._shake256_init_prng_from_seed(
+        rngPtr.address,
+        seedPtr.address,
+        seedLen,
+      );
+
+      privateKeyPtr.write(privateKey);
+
+      if (msgLen > 0) {
+        msgPtr.write(message);
+      }
+
+      // falcon_sign_dyn reads *sig_len as the output buffer capacity.
+      module.HEAPU32[sigLenPtr.address >> 2] =
+        FALCON1024_SIG_COMPRESSED_MAXSIZE;
+
+      const result = module._falcon_sign_dyn(
+        rngPtr.address,
+        sigPtr.address,
+        sigLenPtr.address,
+        FALCON_SIG_COMPRESSED,
+        privateKeyPtr.address,
+        FALCON_DET1024_PRIVKEY_SIZE,
+        msgPtr.address,
+        msgLen,
+        tmpPtr.address,
+        FALCON_TMPSIZE_SIGNDYN,
+      );
+
+      if (result !== 0) {
+        throw new SigningError(result);
+      }
+
+      return sigPtr.read(sigLenPtr.read());
+    });
+  }
+
+  function verifyCompressedRandomized(
+    publicKey: Uint8Array,
+    signature: Uint8Array,
+    message: Uint8Array,
+  ): boolean {
+    const msgLen = message.length;
+
+    const sigPtr = WasmPtr.u8("sig", signature.length);
+    const publicKeyPtr = WasmPtr.u8("publicKey", FALCON_DET1024_PUBKEY_SIZE);
+    const msgPtr = WasmPtr.u8("msg", msgLen);
+    const tmpPtr = WasmPtr.u8("tmp", FALCON_TMPSIZE_VERIFY);
+
+    const allocations = [sigPtr, publicKeyPtr, msgPtr, tmpPtr];
+
+    return withWasmAllocations(allocations, () => {
+      sigPtr.write(signature);
+      publicKeyPtr.write(publicKey);
+
+      if (msgLen > 0) {
+        msgPtr.write(message);
+      }
+
+      const result = module._falcon_verify(
+        sigPtr.address,
+        signature.length,
+        FALCON_SIG_COMPRESSED,
+        publicKeyPtr.address,
+        FALCON_DET1024_PUBKEY_SIZE,
+        msgPtr.address,
+        msgLen,
+        tmpPtr.address,
+        FALCON_TMPSIZE_VERIFY,
       );
 
       if (result !== 0) {

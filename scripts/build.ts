@@ -61,6 +61,9 @@ const exportedFunctions = [
   "falcon_det1024_verify_compressed",
   "shake256_init_prng_from_seed",
   "falcon_det1024_keygen",
+  // Randomized (salted) Falcon, as in the Round 3 specification.
+  "falcon_sign_dyn",
+  "falcon_verify",
   "malloc",
   "free",
 ]
