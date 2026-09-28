@@ -55,6 +55,21 @@ const { publicKey, privateKey } = falcon1024.generateKey(seed);
 
 The same 48-byte seed will always produce the same keypair.
 
+### Randomized (salted) signatures
+
+Alongside deterministic signing, the randomized Falcon-1024 mode from the Round 3 specification (the basis of the upcoming FN-DSA / FIPS 206 standard) is available. Keys are shared between both modes.
+
+```ts
+const signature = falcon1024.signCompressed(privateKey, message, true); // fresh 40-byte nonce
+falcon1024.verifyCompressed(publicKey, signature, message); // mode detected from the header byte
+```
+
+> [!CAUTION]
+> Randomized signing is **experimental** and implements the **NIST Round 3 Falcon submission only**. It is **not FN-DSA (FIPS 206)**.
+>
+> - **Not FN-DSA:** the standardised FN-DSA is expected to differ substantially from Round 3 (e.g. message hashing and domain separation, encodings and headers), so Round 3 randomized signatures will very likely **not** verify under FN-DSA. The output and API of this mode will change in a future release once FIPS 206 is final. Do not rely on it for long-lived signatures or interoperability.
+> - **Not accepted on-chain:** Algorand on-chain verification (the AVM `falcon_verify` opcode) only accepts deterministic signatures. A randomized signature that passes `verifyCompressed` will still be rejected on-chain; check for `signature[0] === FALCON_DET1024_SIG_COMPRESSED_HEADER` if you need to mirror that behaviour.
+
 ## API
 
 The signing operations are grouped under the `falcon1024` object, which
@@ -68,6 +83,9 @@ import {
   FALCON_DET1024_PUBKEY_SIZE,
   FALCON_DET1024_PRIVKEY_SIZE,
   FALCON_DET1024_SIG_COMPRESSED_MAXSIZE,
+  FALCON_DET1024_SIG_COMPRESSED_HEADER,
+  FALCON1024_SIG_COMPRESSED_MAXSIZE,
+  FALCON1024_SIG_COMPRESSED_HEADER,
   KeygenError,
   SigningError,
   VerificationError,
@@ -85,16 +103,18 @@ An object implementing `FalconApi` with the following methods:
   - If `seed` is provided, the keypair is derived deterministically from it.
   - If omitted, a 48-byte seed is created via `crypto.getRandomValues`.
 
-- `signCompressed(privateKey: Uint8Array, message: Uint8Array): Uint8Array`\
+- `signCompressed(privateKey: Uint8Array, message: Uint8Array, randomized = false): Uint8Array`\
   Creates a compressed Falcon-1024 signature of `message` using `privateKey`.
 
+  - By default the signature is deterministic.
+  - With `randomized = true`, a randomized (salted) signature is created with a fresh nonce from `crypto.getRandomValues`; signing the same message twice yields different signatures.
   - Throws `SigningError` if the key length is invalid or signing fails.
 
 - `verifyCompressed(publicKey: Uint8Array, signature: Uint8Array, message: Uint8Array): boolean`\
-  Verifies a compressed signature for `message` under `publicKey`.
+  Verifies a compressed signature (deterministic or randomized, detected from the header byte) for `message` under `publicKey`.
 
   - Returns `true` if the signature is valid.
-  - Throws `VerificationError` if the key/signature is malformed or verification fails.
+  - Throws `VerificationError` if the key/signature is malformed, the header is unknown (`invalid format`), or verification fails.
 
 ### Constants
 
@@ -105,7 +125,16 @@ An object implementing `FalconApi` with the following methods:
   Byte length of a Falcon-1024 private key.
 
 - `FALCON_DET1024_SIG_COMPRESSED_MAXSIZE: number`\
-  Maximum byte length of a compressed Falcon-1024 signature.
+  Maximum byte length of a deterministic compressed Falcon-1024 signature.
+
+- `FALCON1024_SIG_COMPRESSED_MAXSIZE: number`\
+  Maximum byte length of a randomized compressed Falcon-1024 signature.
+
+- `FALCON_DET1024_SIG_COMPRESSED_HEADER: number`\
+  Header byte of a deterministic compressed signature (`0xBA`).
+
+- `FALCON1024_SIG_COMPRESSED_HEADER: number`\
+  Header byte of a randomized compressed signature (`0x3A`).
 
 ### Errors
 

@@ -1,9 +1,13 @@
 import { describe, test, expect } from "vitest";
 import {
   falcon1024,
+  SigningError,
   VerificationError,
   FALCON_DET1024_PUBKEY_SIZE,
   FALCON_DET1024_PRIVKEY_SIZE,
+  FALCON_DET1024_SIG_COMPRESSED_HEADER,
+  FALCON1024_SIG_COMPRESSED_MAXSIZE,
+  FALCON1024_SIG_COMPRESSED_HEADER,
 } from "../src/index";
 
 const { generateKey, signCompressed, verifyCompressed } = falcon1024;
@@ -145,6 +149,129 @@ describe("Falcon", () => {
       expect(() => {
         verifyCompressed(publicKey, corruptedSig, message);
       }).toThrow(VerificationError);
+    });
+  });
+
+  describe("signCompressed (randomized)", () => {
+    const { publicKey, privateKey } = generateKey(
+      new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]),
+    );
+    const message = new TextEncoder().encode("Hello, Falcon!");
+
+    test("is deterministic by default", () => {
+      expect(signCompressed(privateKey, message)[0]).toBe(
+        FALCON_DET1024_SIG_COMPRESSED_HEADER,
+      );
+      expect(signCompressed(privateKey, message, false)).toEqual(
+        signCompressed(privateKey, message),
+      );
+    });
+
+    test("produces a randomized compressed signature", () => {
+      const signature = signCompressed(privateKey, message, true);
+
+      expect(signature[0]).toBe(FALCON1024_SIG_COMPRESSED_HEADER);
+      expect(signature.length).toBeGreaterThan(41);
+      expect(signature.length).toBeLessThanOrEqual(
+        FALCON1024_SIG_COMPRESSED_MAXSIZE,
+      );
+    });
+
+    test("produces different signatures for the same message", () => {
+      const sig1 = signCompressed(privateKey, message, true);
+      const sig2 = signCompressed(privateKey, message, true);
+
+      expect(sig1).not.toEqual(sig2);
+    });
+
+    test("signs and verifies empty message", () => {
+      const empty = new Uint8Array(0);
+      const signature = signCompressed(privateKey, empty, true);
+
+      expect(signature[0]).toBe(FALCON1024_SIG_COMPRESSED_HEADER);
+      expect(verifyCompressed(publicKey, signature, empty)).toBe(true);
+    });
+
+    test("rejects invalid private key length", () => {
+      expect(() => {
+        signCompressed(new Uint8Array(10), message, true);
+      }).toThrow(SigningError);
+    });
+  });
+
+  describe("verifyCompressed (header dispatch)", () => {
+    const { publicKey, privateKey } = generateKey(
+      new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]),
+    );
+    const message = new TextEncoder().encode("Hello, Falcon!");
+    const wrongMessage = new TextEncoder().encode("Wrong message");
+
+    test("accepts randomized signatures", () => {
+      const signature = signCompressed(privateKey, message, true);
+
+      expect(verifyCompressed(publicKey, signature, message)).toBe(true);
+    });
+
+    test("rejects wrong message for both modes", () => {
+      expect(() => {
+        verifyCompressed(
+          publicKey,
+          signCompressed(privateKey, message),
+          wrongMessage,
+        );
+      }).toThrow(VerificationError);
+      expect(() => {
+        verifyCompressed(
+          publicKey,
+          signCompressed(privateKey, message, true),
+          wrongMessage,
+        );
+      }).toThrow(VerificationError);
+    });
+
+    test("rejects corrupted randomized signature", () => {
+      const signature = signCompressed(privateKey, message, true);
+      signature[100]! ^= 0xff;
+
+      expect(() => {
+        verifyCompressed(publicKey, signature, message);
+      }).toThrow(VerificationError);
+    });
+
+    test("rejects a randomized signature relabelled as deterministic", () => {
+      const signature = signCompressed(privateKey, message, true);
+      signature[0] = FALCON_DET1024_SIG_COMPRESSED_HEADER;
+
+      expect(() => {
+        verifyCompressed(publicKey, signature, message);
+      }).toThrow(VerificationError);
+    });
+
+    test("rejects a deterministic signature relabelled as randomized", () => {
+      const signature = signCompressed(privateKey, message);
+      signature[0] = FALCON1024_SIG_COMPRESSED_HEADER;
+
+      expect(() => {
+        verifyCompressed(publicKey, signature, message);
+      }).toThrow(VerificationError);
+    });
+
+    test("rejects oversized randomized signature", () => {
+      const signature = new Uint8Array(FALCON1024_SIG_COMPRESSED_MAXSIZE + 1);
+      signature[0] = FALCON1024_SIG_COMPRESSED_HEADER;
+
+      expect(() => {
+        verifyCompressed(publicKey, signature, message);
+      }).toThrow(/Invalid signature length/);
+    });
+
+    test("rejects unknown header", () => {
+      const signature = signCompressed(privateKey, message, true);
+      signature[0] = 0x5a; // randomized CT header, not supported here
+
+      expect(() => {
+        verifyCompressed(publicKey, signature, message);
+      }).toThrow("invalid format");
     });
   });
 });
