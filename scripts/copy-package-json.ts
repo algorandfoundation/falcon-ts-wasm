@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'node:fs'
+import { copyFileSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const pick = <T extends object, U extends keyof T>(object: T, ...props: U[]): Partial<T> => {
@@ -48,4 +48,8 @@ const packageJson = JSON.parse(readFileSync(join(inputFolder, 'package.json'), '
 const sectionsToUse = [...standardSectionWhitelist, ...customSections]
 const output = { main, types, scripts: {}, files: ['**'], ...pick(packageJson, ...(sectionsToUse as (keyof typeof packageJson)[])) }
 writeFileSync(join(outputFolder, 'package.json'), `${JSON.stringify(output, undefined, 2)}\n`, 'utf-8')
+
+// Ship the license text alongside the published package so the terms travel
+// with the distributed artifacts, not just the source repository.
+copyFileSync(join(inputFolder, 'LICENSE'), join(outputFolder, 'LICENSE'))
 
