@@ -1,47 +1,67 @@
 {
-  "GHSA-mh99-v99m-4gvg": {
+  "GHSA-q2hr-2g5m-vwhr": {
     "active": true,
-    "notes": "brace-expansion DoS. Bundled inside npm@11, pulled in by @semantic-release/npm. Dev-only (CI publish step), not reachable from published dist. No fix available: semantic-release and @semantic-release/npm are already at latest.",
+    "notes": "brace-expansion quadratic-time expansion DoS. Bundled inside npm@11.21.0 via @semantic-release/npm; npm overrides cannot replace bundled dependencies. Dev-only CI publishing, absent from published dist; no untrusted brace patterns are supplied. Revisit when a fixed npm bundle meets the 7-day minimum release age.",
     "expiry": "2027-02-04"
   },
-  "GHSA-rgw5-rvv9-x895": {
+  "GHSA-qhr7-859c-m2p7": {
     "active": true,
-    "notes": "brace-expansion DoS via unbounded intermediate arrays. Bundled inside npm@11 via @semantic-release/npm. Dev-only (CI publish step), not reachable from published dist. No fix available upstream.",
+    "notes": "brace-expansion nested-group stack-exhaustion DoS. Bundled inside npm@11.21.0 via @semantic-release/npm; npm overrides cannot replace bundled dependencies. Dev-only CI publishing, absent from published dist; no untrusted brace patterns are supplied. Revisit when a fixed npm bundle meets the 7-day minimum release age.",
     "expiry": "2027-02-04"
   },
-  "GHSA-mwp4-54f8-5fhr": {
+  "GHSA-6j4f-fj2g-mc7p": {
     "active": true,
-    "notes": "ip-address SSRF via leading-zero octets. Bundled inside npm@11 via @semantic-release/npm. Dev-only (CI publish step); we never parse untrusted addresses. No fix available upstream.",
+    "notes": "brace-expansion parseCommaParts stack-exhaustion DoS. Bundled inside npm@11.21.0 via @semantic-release/npm; npm overrides cannot replace bundled dependencies. Dev-only CI publishing, absent from published dist; no untrusted brace patterns are supplied. Revisit when a fixed npm bundle meets the 7-day minimum release age.",
     "expiry": "2027-02-04"
   },
-  "GHSA-4xrf-jv44-h6hh": {
+  "GHSA-vfj7-8cjw-p6xm": {
     "active": true,
-    "notes": "ip-address CIDR suffix suppresses special-use classification. Bundled inside npm@11 via @semantic-release/npm. Dev-only (CI publish step); we never parse untrusted addresses. No fix available upstream.",
+    "notes": "braces stack-exhaustion DoS through deeply nested patterns, via micromatch in semantic-release. No patched braces release is available (latest 3.0.3). Dev-only CI release tooling, absent from published dist; glob patterns come from repository-controlled release configuration, not untrusted input.",
     "expiry": "2027-02-04"
   },
-  "GHSA-22jq-vg5j-6vgg": {
+  "GHSA-ch52-4w7c-c8xp": {
     "active": true,
-    "notes": "ip-address misclassifies IPv4-mapped/NAT64 IPv6. Bundled inside npm@11 via @semantic-release/npm. Dev-only (CI publish step); we never parse untrusted addresses. No fix available upstream.",
+    "notes": "http-cache-semantics max-stale cross-user cache disclosure. Bundled inside npm@11.21.0 via @semantic-release/npm; npm overrides cannot replace bundled dependencies. Dev-only CI publishing, absent from published dist; no application shared-user HTTP cache is exposed. Revisit when a fixed npm bundle meets the 7-day minimum release age.",
     "expiry": "2027-02-04"
   },
-  "GHSA-r292-9mhp-454m": {
+  "GHSA-rpw4-54j3-4h4q": {
     "active": true,
-    "notes": "node-tar stack-overflow DoS via crafted long-path tar. Bundled inside npm@11 via @semantic-release/npm. Dev-only (CI publish step); tarballs come from the npm registry, not untrusted input. No fix available upstream.",
+    "notes": "ip-address link-local IPv6 misclassification. Bundled inside npm@11.21.0 via @semantic-release/npm; npm overrides cannot replace bundled dependencies. Dev-only CI publishing, absent from published dist; this project does not use IP classification for SSRF protection. Revisit when a fixed npm bundle meets the 7-day minimum release age.",
     "expiry": "2027-02-04"
   },
-  "GHSA-8xcm-r25x-g524": {
+  "GHSA-2vr4-cq9g-pvrc": {
     "active": true,
-    "notes": "undici response desynchronization via retry interceptor. Bundled inside npm@11 via @semantic-release/npm. Dev-only (CI publish step). No fix available upstream.",
+    "notes": "ip-address NAT64 local-use misclassification. Bundled inside npm@11.21.0 via @semantic-release/npm; npm overrides cannot replace bundled dependencies. Dev-only CI publishing, absent from published dist; this project does not use IP classification for SSRF protection. Revisit when a fixed npm bundle meets the 7-day minimum release age.",
     "expiry": "2027-02-04"
   },
-  "GHSA-m8rv-5g2x-5cg5": {
+  "GHSA-j6r3-76f7-8jcv": {
     "active": true,
-    "notes": "undici CRLF injection via blob-like body 'type'. Bundled inside npm@11 via @semantic-release/npm. Dev-only (CI publish step). No fix available upstream.",
+    "notes": "ip-address cross-family subnet allowlist bypass. Bundled inside npm@11.21.0 via @semantic-release/npm; npm overrides cannot replace bundled dependencies. Dev-only CI publishing, absent from published dist; this project does not use IP subnet allowlists. Revisit when a fixed npm bundle meets the 7-day minimum release age.",
     "expiry": "2027-02-04"
   },
-  "GHSA-v3r7-h72x-cjcm": {
+  "GHSA-h3mg-xc3c-68pw": {
     "active": true,
-    "notes": "undici cookie attribute injection. Bundled inside npm@11 via @semantic-release/npm. Dev-only (CI publish step). No fix available upstream.",
+    "notes": "ip-address unbounded IPv6 parse diagnostic DoS. Bundled inside npm@11.21.0 via @semantic-release/npm; npm overrides cannot replace bundled dependencies. Dev-only CI publishing, absent from published dist; no user-supplied IP address parser is exposed. Revisit when a fixed npm bundle meets the 7-day minimum release age.",
+    "expiry": "2027-02-04"
+  },
+  "GHSA-rj75-hqrm-r3gf": {
+    "active": true,
+    "notes": "postcss-selector-parser quadratic-time selector parsing DoS. Bundled inside npm@11.21.0 via @semantic-release/npm; npm overrides cannot replace bundled dependencies. Dev-only CI publishing, absent from published dist; this project does not process user-supplied CSS selectors. Revisit when a fixed npm bundle meets the 7-day minimum release age.",
+    "expiry": "2027-02-04"
+  },
+  "GHSA-3wwx-pv8p-q78v": {
+    "active": true,
+    "notes": "undici WebSocket permessage-deflate unhandled-error DoS. Bundled inside npm@11.21.0 via @semantic-release/npm; npm overrides cannot replace bundled dependencies. Dev-only CI publishing, absent from published dist; publishing does not use WebSockets. Revisit when a fixed npm bundle meets the 7-day minimum release age.",
+    "expiry": "2027-02-04"
+  },
+  "GHSA-r53p-7pc4-xj5r": {
+    "active": true,
+    "notes": "undici retry-interceptor response splitting. Bundled inside npm@11.21.0 via @semantic-release/npm; npm overrides cannot replace bundled dependencies. Dev-only CI publishing, absent from published dist; no application HTTP proxy is exposed. Revisit when a fixed npm bundle meets the 7-day minimum release age.",
+    "expiry": "2027-02-04"
+  },
+  "GHSA-rfgv-xxqx-mfg5": {
+    "active": true,
+    "notes": "undici unrequested WebSocket subprotocol DoS. Bundled inside npm@11.21.0 via @semantic-release/npm; npm overrides cannot replace bundled dependencies. Dev-only CI publishing, absent from published dist; publishing does not use WebSockets. Revisit when a fixed npm bundle meets the 7-day minimum release age.",
     "expiry": "2027-02-04"
   }
 }
