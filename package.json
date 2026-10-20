@@ -48,6 +48,11 @@
     "vitest": "^4.0.0"
   },
   "license": "MIT",
+  "overrides": {
+    "serve": {
+      "compression": "^1.8.2"
+    }
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/algorandfoundation/falcon-ts-wasm.git"
