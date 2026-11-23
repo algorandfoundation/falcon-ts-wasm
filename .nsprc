@@ -14,16 +14,6 @@
     "notes": "brace-expansion parseCommaParts stack-exhaustion DoS. Bundled inside npm@11.21.0 via @semantic-release/npm; npm overrides cannot replace bundled dependencies. Dev-only CI publishing, absent from published dist; no untrusted brace patterns are supplied. Revisit when a fixed npm bundle meets the 7-day minimum release age.",
     "expiry": "2027-02-04"
   },
-  "GHSA-vfj7-8cjw-p6xm": {
-    "active": true,
-    "notes": "braces stack-exhaustion DoS through deeply nested patterns, via micromatch in semantic-release. No patched braces release is available (latest 3.0.3). Dev-only CI release tooling, absent from published dist; glob patterns come from repository-controlled release configuration, not untrusted input.",
-    "expiry": "2027-02-04"
-  },
-  "GHSA-ch52-4w7c-c8xp": {
-    "active": true,
-    "notes": "http-cache-semantics max-stale cross-user cache disclosure. Bundled inside npm@11.21.0 via @semantic-release/npm; npm overrides cannot replace bundled dependencies. Dev-only CI publishing, absent from published dist; no application shared-user HTTP cache is exposed. Revisit when a fixed npm bundle meets the 7-day minimum release age.",
-    "expiry": "2027-02-04"
-  },
   "GHSA-rpw4-54j3-4h4q": {
     "active": true,
     "notes": "ip-address link-local IPv6 misclassification. Bundled inside npm@11.21.0 via @semantic-release/npm; npm overrides cannot replace bundled dependencies. Dev-only CI publishing, absent from published dist; this project does not use IP classification for SSRF protection. Revisit when a fixed npm bundle meets the 7-day minimum release age.",
